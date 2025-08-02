@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import Icon from "@/components/ui/icon";
@@ -19,6 +20,14 @@ const Index = () => {
   const [robuxAmount, setRobuxAmount] = useState("");
   const [nickname, setNickname] = useState("");
   const [orders, setOrders] = useState<any[]>([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userProfile, setUserProfile] = useState({
+    name: "",
+    email: "",
+    avatar: ""
+  });
+  const [loginForm, setLoginForm] = useState({ email: "", password: "" });
+  const [registerForm, setRegisterForm] = useState({ name: "", email: "", password: "" });
 
   const gameItems = [
     {
@@ -97,6 +106,70 @@ const Index = () => {
     setRobuxAmount("");
     setNickname("");
     setBuyRobuxOpen(false);
+  };
+
+  const handleLogin = () => {
+    if (!loginForm.email || !loginForm.password) {
+      toast({
+        title: "Ошибка",
+        description: "Заполните все поля",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUserProfile({
+      name: loginForm.email.split('@')[0],
+      email: loginForm.email,
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${loginForm.email}`
+    });
+    setIsLoggedIn(true);
+    setIsAuthOpen(false);
+    setBalance(500);
+    
+    toast({
+      title: "Добро пожаловать!",
+      description: "Вы успешно вошли в систему",
+    });
+  };
+
+  const handleRegister = () => {
+    if (!registerForm.name || !registerForm.email || !registerForm.password) {
+      toast({
+        title: "Ошибка",
+        description: "Заполните все поля",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUserProfile({
+      name: registerForm.name,
+      email: registerForm.email,
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${registerForm.email}`
+    });
+    setIsLoggedIn(true);
+    setIsAuthOpen(false);
+    setBalance(1000);
+    
+    toast({
+      title: "Регистрация успешна!",
+      description: "Добро пожаловать на платформу!",
+    });
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUserProfile({ name: "", email: "", avatar: "" });
+    setBalance(0);
+    setOrders([]);
+    setLoginForm({ email: "", password: "" });
+    setRegisterForm({ name: "", email: "", password: "" });
+    
+    toast({
+      title: "До свидания!",
+      description: "Вы вышли из системы",
+    });
   };
 
   return (
@@ -222,14 +295,47 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              {/* Auth Dialog */}
-              <Dialog open={isAuthOpen} onOpenChange={setIsAuthOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-gaming-orange hover:bg-gaming-orange/80">
-                    <Icon name="User" size={16} className="mr-2" />
-                    Войти
-                  </Button>
-                </DialogTrigger>
+              {/* User Profile or Auth */}
+              {isLoggedIn ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center space-x-3 p-2">
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={userProfile.avatar} alt={userProfile.name} />
+                        <AvatarFallback className="bg-gaming-purple text-white">
+                          {userProfile.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-white hidden md:block">{userProfile.name}</span>
+                      <Icon name="ChevronDown" size={16} className="text-white" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-gaming-dark border-gaming-purple/30">
+                    <DropdownMenuItem className="text-white hover:bg-gaming-purple/20">
+                      <Icon name="User" size={16} className="mr-2" />
+                      Профиль
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="text-white hover:bg-gaming-purple/20">
+                      <Icon name="Settings" size={16} className="mr-2" />
+                      Настройки
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={handleLogout}
+                      className="text-gaming-orange hover:bg-gaming-orange/20"
+                    >
+                      <Icon name="LogOut" size={16} className="mr-2" />
+                      Выйти
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Dialog open={isAuthOpen} onOpenChange={setIsAuthOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-gaming-orange hover:bg-gaming-orange/80">
+                      <Icon name="User" size={16} className="mr-2" />
+                      Войти
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent className="bg-gaming-dark border-gaming-purple/30">
                   <DialogHeader>
                     <DialogTitle className="text-white">Вход в аккаунт</DialogTitle>
@@ -243,15 +349,46 @@ const Index = () => {
                       <TabsTrigger value="register" className="text-white">Регистрация</TabsTrigger>
                     </TabsList>
                     <TabsContent value="login" className="space-y-4">
-                      <Input placeholder="Email" className="bg-gaming-blue border-gaming-purple/30 text-white" />
-                      <Input type="password" placeholder="Пароль" className="bg-gaming-blue border-gaming-purple/30 text-white" />
-                      <Button className="w-full bg-gaming-purple hover:bg-gaming-purple/80">Войти</Button>
+                      <Input 
+                        placeholder="Email" 
+                        value={loginForm.email}
+                        onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
+                        className="bg-gaming-blue border-gaming-purple/30 text-white" 
+                      />
+                      <Input 
+                        type="password" 
+                        placeholder="Пароль"
+                        value={loginForm.password}
+                        onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                        className="bg-gaming-blue border-gaming-purple/30 text-white" 
+                      />
+                      <Button onClick={handleLogin} className="w-full bg-gaming-purple hover:bg-gaming-purple/80">
+                        Войти
+                      </Button>
                     </TabsContent>
                     <TabsContent value="register" className="space-y-4">
-                      <Input placeholder="Имя пользователя" className="bg-gaming-blue border-gaming-purple/30 text-white" />
-                      <Input placeholder="Email" className="bg-gaming-blue border-gaming-purple/30 text-white" />
-                      <Input type="password" placeholder="Пароль" className="bg-gaming-blue border-gaming-purple/30 text-white" />
-                      <Button className="w-full bg-gaming-orange hover:bg-gaming-orange/80">Зарегистрироваться</Button>
+                      <Input 
+                        placeholder="Имя пользователя"
+                        value={registerForm.name}
+                        onChange={(e) => setRegisterForm({...registerForm, name: e.target.value})}
+                        className="bg-gaming-blue border-gaming-purple/30 text-white" 
+                      />
+                      <Input 
+                        placeholder="Email"
+                        value={registerForm.email}
+                        onChange={(e) => setRegisterForm({...registerForm, email: e.target.value})}
+                        className="bg-gaming-blue border-gaming-purple/30 text-white" 
+                      />
+                      <Input 
+                        type="password" 
+                        placeholder="Пароль"
+                        value={registerForm.password}
+                        onChange={(e) => setRegisterForm({...registerForm, password: e.target.value})}
+                        className="bg-gaming-blue border-gaming-purple/30 text-white" 
+                      />
+                      <Button onClick={handleRegister} className="w-full bg-gaming-orange hover:bg-gaming-orange/80">
+                        Зарегистрироваться
+                      </Button>
                     </TabsContent>
                   </Tabs>
                 </DialogContent>
