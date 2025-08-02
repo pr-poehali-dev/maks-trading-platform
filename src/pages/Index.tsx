@@ -3,15 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 import Icon from "@/components/ui/icon";
 
 const Index = () => {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [balance, setBalance] = useState(0);
   const [activeTab, setActiveTab] = useState("games");
+  const [buyRobuxOpen, setBuyRobuxOpen] = useState(false);
+  const [robuxAmount, setRobuxAmount] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [orders, setOrders] = useState<any[]>([]);
 
   const gameItems = [
     {
@@ -61,6 +68,37 @@ const Index = () => {
     }
   };
 
+  const handleRobuxPurchase = () => {
+    if (!robuxAmount || !nickname) {
+      toast({
+        title: "Ошибка",
+        description: "Заполните все поля",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newOrder = {
+      id: Date.now(),
+      type: "robux",
+      amount: robuxAmount,
+      nickname: nickname,
+      timestamp: new Date().toLocaleString('ru-RU'),
+      status: "В обработке"
+    };
+
+    setOrders([...orders, newOrder]);
+    
+    toast({
+      title: "Заказ создан!",
+      description: `Администратор получил заказ на ${robuxAmount} робуксов для ${nickname}`,
+    });
+
+    setRobuxAmount("");
+    setNickname("");
+    setBuyRobuxOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gaming-dark via-gaming-blue to-gaming-purple">
       {/* Header */}
@@ -80,14 +118,91 @@ const Index = () => {
                   <Icon name="Gamepad2" size={16} className="mr-2" />
                   Игры
                 </Button>
-                <Button variant="ghost" className="text-white hover:text-gaming-cyan">
-                  <Icon name="Coins" size={16} className="mr-2" />
-                  Робуксы
-                </Button>
-                <Button variant="ghost" className="text-white hover:text-gaming-cyan">
-                  <Icon name="Package" size={16} className="mr-2" />
-                  Заказы
-                </Button>
+                <Dialog open={buyRobuxOpen} onOpenChange={setBuyRobuxOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" className="text-white hover:text-gaming-cyan">
+                      <Icon name="Coins" size={16} className="mr-2" />
+                      Робуксы
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-gaming-dark border-gaming-purple/30">
+                    <DialogHeader>
+                      <DialogTitle className="text-white">Купить Робуксы</DialogTitle>
+                      <DialogDescription className="text-gaming-cyan">
+                        Укажите количество робуксов и ваш никнейм в Roblox
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="robux-amount" className="text-white">Количество робуксов</Label>
+                        <Input
+                          id="robux-amount"
+                          type="number"
+                          placeholder="Например: 800"
+                          value={robuxAmount}
+                          onChange={(e) => setRobuxAmount(e.target.value)}
+                          className="bg-gaming-blue border-gaming-purple/30 text-white"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="nickname" className="text-white">Никнейм в Roblox</Label>
+                        <Input
+                          id="nickname"
+                          placeholder="Ваш никнейм"
+                          value={nickname}
+                          onChange={(e) => setNickname(e.target.value)}
+                          className="bg-gaming-blue border-gaming-purple/30 text-white"
+                        />
+                      </div>
+                      <Button 
+                        onClick={handleRobuxPurchase} 
+                        className="w-full bg-gaming-purple hover:bg-gaming-purple/80"
+                      >
+                        <Icon name="ShoppingCart" size={16} className="mr-2" />
+                        Создать заказ
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" className="text-white hover:text-gaming-cyan">
+                      <Icon name="Package" size={16} className="mr-2" />
+                      Заказы ({orders.length})
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-gaming-dark border-gaming-purple/30 max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle className="text-white">Заказы</DialogTitle>
+                      <DialogDescription className="text-gaming-cyan">
+                        История ваших заказов
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 max-h-80 overflow-y-auto">
+                      {orders.length === 0 ? (
+                        <p className="text-gaming-cyan text-center py-8">Заказов пока нет</p>
+                      ) : (
+                        orders.map((order) => (
+                          <Card key={order.id} className="bg-gaming-blue/30 border-gaming-purple/30">
+                            <CardContent className="p-4">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="text-white font-semibold">
+                                    {order.amount} робуксов для {order.nickname}
+                                  </p>
+                                  <p className="text-gaming-cyan text-sm">{order.timestamp}</p>
+                                </div>
+                                <Badge className="bg-gaming-orange text-white">
+                                  {order.status}
+                                </Badge>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
                 <Button variant="ghost" className="text-white hover:text-gaming-cyan">
                   <Icon name="HelpCircle" size={16} className="mr-2" />
                   Поддержка
@@ -286,6 +401,7 @@ const Index = () => {
           </div>
         </div>
       </footer>
+      <Toaster />
     </div>
   );
 };
