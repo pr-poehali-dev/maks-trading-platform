@@ -10,18 +10,10 @@ import Icon from "@/components/ui/icon";
 
 const Index = () => {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [balance, setBalance] = useState(1250);
+  const [balance, setBalance] = useState(0);
   const [activeTab, setActiveTab] = useState("games");
 
   const gameItems = [
-    {
-      id: 1,
-      title: "Minecraft Premium",
-      price: 899,
-      image: "/img/cafaa466-8d0b-4ce5-8ffa-d74f6f707dac.jpg",
-      category: "Игры",
-      seller: "GamerShop"
-    },
     {
       id: 2,
       title: "Roblox Premium",
@@ -29,14 +21,6 @@ const Index = () => {
       image: "/img/cafaa466-8d0b-4ce5-8ffa-d74f6f707dac.jpg",
       category: "Игры",
       seller: "ProGaming"
-    },
-    {
-      id: 3,
-      title: "Steam Gift Card",
-      price: 500,
-      image: "/img/cafaa466-8d0b-4ce5-8ffa-d74f6f707dac.jpg",
-      category: "Игры",
-      seller: "SteamDealer"
     }
   ];
 
