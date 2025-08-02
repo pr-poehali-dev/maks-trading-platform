@@ -393,6 +393,7 @@ const Index = () => {
                   </Tabs>
                 </DialogContent>
               </Dialog>
+              )}
             </div>
           </div>
         </div>
